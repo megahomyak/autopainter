@@ -1,8 +1,8 @@
 from PIL import ImageGrab
 from types import SimpleNamespace as SN
 import time
-import pyautogui # For some reason helps with scaled screens on Windows when imported and used with pydirectinput
-import pydirectinput
+import pyautogui # For some reason fixes screen scaling for other libraries
+import autoit
 
 # Screen interactor adapters:
 
@@ -24,18 +24,14 @@ def get_height(screenshot):
 
 # Gui interactor adapters:
 
-pydirectinput.PAUSE = 0 # Disable delay between inputs
-
 def click(spot):
-    pydirectinput.click(spot.x, spot.y, duration=0.2)
+    autoit.mouse_click("left", spot.x, spot.y, speed=0)
 
 def press_buttons(buttons):
-    pydirectinput.write(buttons)
+    autoit.send(buttons)
 
-def press_hot_key(hot_key, insides):
-    pydirectinput.keyDown(hot_key)
-    press_buttons(insides)
-    pydirectinput.keyUp(hot_key)
+def press_ctrl_and_buttons(buttons):
+    autoit.send("^" + buttons)
 
 # Gui interactor adapters end
 
@@ -66,7 +62,7 @@ class GuiInteractors:
         time.sleep(0.3) # Wait for the color picker to open
         self.click_gui(bias=SN(x=0.7, y=-0.13)) # Switch to color field
         time.sleep(0.3) # Wait for the switch
-        press_hot_key("ctrl", "a") # Select the current color
+        press_ctrl_and_buttons("a") # Select the current color
         time.sleep(0.3) # Wait for the selection
         press_buttons(color_hex) # Write the new color
         time.sleep(0.3) # Wait for the writing...

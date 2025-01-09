@@ -1,3 +1,3 @@
 pillow==11.1.0
 pyautogui==0.9.54
-pydirectinput==1.0.4
+pyautoit==0.6.5
