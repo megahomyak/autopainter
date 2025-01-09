@@ -2,7 +2,7 @@ from PIL import ImageGrab
 from types import SimpleNamespace as SN
 import time
 import pyautogui # For some reason fixes screen scaling for other libraries
-import autoit
+import ait
 
 # Screen interactor adapters:
 
@@ -25,13 +25,16 @@ def get_height(screenshot):
 # Gui interactor adapters:
 
 def click(spot):
-    autoit.mouse_click("left", spot.x, spot.y, speed=0)
+    ait.click(spot.x, spot.y)
 
-def press_buttons(buttons):
-    autoit.send(buttons)
+def enter_text(text):
+    ait.write(text)
 
-def press_ctrl_and_buttons(buttons):
-    autoit.send("^" + buttons)
+def hold_ctrl_and_enter_text(text):
+    with ait.hold("ctrl"):
+        time.sleep(1)
+        enter_text(text)
+        time.sleep(1)
 
 # Gui interactor adapters end
 
@@ -62,9 +65,10 @@ class GuiInteractors:
         time.sleep(0.3) # Wait for the color picker to open
         self.click_gui(bias=SN(x=0.7, y=-0.13)) # Switch to color field
         time.sleep(0.3) # Wait for the switch
-        press_ctrl_and_buttons("a") # Select the current color
+        hold_ctrl_and_enter_text("a") # Select the current color
         time.sleep(0.3) # Wait for the selection
-        press_buttons(color_hex) # Write the new color
+        return
+        enter_text(color_hex) # Write the new color
         time.sleep(0.3) # Wait for the writing...
         self.click_gui(bias=SN(x=0.38, y=-0.13)) # Confirm color
         time.sleep(0.3) # Wait for confirmation
