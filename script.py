@@ -1,64 +1,94 @@
 from PIL import ImageGrab
 from types import SimpleNamespace as SN
 import time
-import pyautogui
+import pyautogui # For some reason helps with scaled screens on Windows when imported and used with pydirectinput
+import pydirectinput
 
-pyautogui.PAUSE = 0 # Disable delay between pyautogui inputs
+# Screen interactor adapters:
 
-time.sleep(3) # Wait for the user to open Roblox
+def make_screenshot(area=None):
+    if area is not None:
+        area = (area.left, area.top, area.right, area.bottom)
+    return ImageGrab.grab(bbox=area)
 
-screen = ImageGrab.grab()
-center = SN(x=screen.width//2, y=screen.height//2)
+def get_pixel(screenshot, spot):
+    return screenshot.getpixel((spot.x, spot.y))
 
-def get_pixel(spot):
-    return screen.getpixel((spot.x, spot.y))
+def get_width(screenshot):
+    return screenshot.width
 
-def click(spot=None):
-    if spot is None:
-        pyautogui.click(duration=1)
-    else:
-        pyautogui.click(spot.x, spot.y)
-    
-def move(spot, duration=0):
-    pyautogui.moveTo(spot.x, spot.y, duration=duration)
+def get_height(screenshot):
+    return screenshot.height
 
-def find_bound(bias):
-    current = center
-    while True:
-        new = SN(x=current.x + bias.x, y=current.y + bias.y)
-        if get_pixel(spot=new) != (255, 255, 255):
-            return current
-        current = new
+# Screen interactor adapters end
 
-bottom = find_bound(bias=SN(x=0, y=1)).y
-top = find_bound(bias=SN(x=0, y=-1)).y
-left = find_bound(bias=SN(x=-1, y=0)).x
-right = find_bound(bias=SN(x=1, y=0)).x
+# Gui interactor adapters:
 
-side = bottom - top
-bottom_left = SN(x=left, y=bottom)
-print(bottom_left)
+pydirectinput.PAUSE = 0 # Disable delay between inputs
 
-def get_gui_spot(bias):
-    return SN(x=bottom_left.x + bias.x*side, y=bottom_left.y + bias.y*side)
+def click(spot):
+    pydirectinput.click(spot.x, spot.y, duration=0.2)
 
-def pick_color(color):
-    def toggle_color_picker():
-        # We need to move first and click second, because this game for some reason needs to know we're on a button before allowing to click, and it checks for presence by checking for movement
-        target = get_gui_spot(bias=SN(x=0.2, y=0.1))
-        move(spot=SN(x=target.x - 20, y=target.y))
-        move(spot=target, duration=1)
-        click()
-    color_hex = "#%02x%02x%02x" % (color.r, color.g, color.b)
+def press_buttons(buttons):
+    pydirectinput.write(buttons)
 
-    toggle_color_picker()
-    # click_gui(bias=SN(x=0.6, y=-0.3)) # Switch to color field
-    # pyautogui.hotkey("ctrl", "a") # Select the current color
-    # pyautogui.write(color_hex) # Write the new color
-    # click_gui(bias=SN(x=0.5, y=-0.3)) # Confirm color
-    # toggle_color_picker()
-    
+def press_hot_key(hot_key, insides):
+    pydirectinput.keyDown(hot_key)
+    press_buttons(insides)
+    pydirectinput.keyUp(hot_key)
+
+# Gui interactor adapters end
+
+class BoundFinder:
+    def __init__(self, screenshot):
+        self.center = SN(x=get_width(screenshot)//2, y=get_height(screenshot)//2)
+        self.screenshot = screenshot
+    def find_bound(self, bias):
+        current = self.center
+        while True:
+            new = SN(x=current.x + bias.x, y=current.y + bias.y)
+            if get_pixel(screenshot=self.screenshot, spot=new) != (255, 255, 255):
+                return current
+            current = new
+
+class GuiInteractors:
+    def __init__(self, bottom_left, side):
+        self.side = side
+        self.bottom_left = bottom_left
+
+    def click_gui(self, bias):
+        click(spot=SN(x=self.bottom_left.x + int(bias.x*self.side), y=self.bottom_left.y + int(bias.y*self.side)))
+
+    def pick_color(self, color):
+        color_hex = "#%02x%02x%02x" % (color.r, color.g, color.b)
+
+        self.click_gui(bias=SN(x=0.2, y=0.1)) # Open the color picker
+        time.sleep(0.3) # Wait for the color picker to open
+        self.click_gui(bias=SN(x=0.7, y=-0.13)) # Switch to color field
+        time.sleep(0.3) # Wait for the switch
+        press_hot_key("ctrl", "a") # Select the current color
+        time.sleep(0.3) # Wait for the selection
+        press_buttons(color_hex) # Write the new color
+        time.sleep(0.3) # Wait for the writing...
+        self.click_gui(bias=SN(x=0.38, y=-0.13)) # Confirm color
+        time.sleep(0.3) # Wait for confirmation
+
 def main():
-    pick_color(color=SN(r=0, g=100, b=0))
+    time.sleep(3) # Wait for the user to open Roblox
+
+    screenshot = make_screenshot()
+    bound_finder = BoundFinder(screenshot)
+
+    bottom = bound_finder.find_bound(bias=SN(x=0, y=1)).y
+    top = bound_finder.find_bound(bias=SN(x=0, y=-1)).y
+    left = bound_finder.find_bound(bias=SN(x=-1, y=0)).x
+    right = bound_finder.find_bound(bias=SN(x=1, y=0)).x
+    
+    side = bottom - top
+    bottom_left = SN(x=left, y=bottom)
+    
+    gui_interactors = GuiInteractors(bottom_left, side)
+
+    gui_interactors.pick_color(color=SN(r=0, g=100, b=0))
 
 main()
