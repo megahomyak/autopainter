@@ -2,7 +2,7 @@ from PIL import ImageGrab
 from types import SimpleNamespace as SN
 import time
 import pyautogui # For some reason fixes screen scaling for other libraries
-import pyautoit
+import autoit
 
 # Screen interactor adapters:
 
@@ -25,16 +25,13 @@ def get_height(screenshot):
 # Gui interactor adapters:
 
 def click(spot):
-    pyautoit.mouse_click("left", spot.x, spot.y, speed=0)
+    autoit.mouse_click("left", spot.x, spot.y, speed=3)
 
 def enter_text(text):
-    pyautoit.send(text)
+    autoit.send(text.replace("#", "{#}"))
 
 def hold_ctrl_and_enter_text(text):
-    with ait.hold("ctrl"):
-        time.sleep(1)
-        enter_text(text)
-        time.sleep(1)
+    autoit.send("^" + text.replace("#", "{#}"))
 
 # Gui interactor adapters end
 
@@ -62,16 +59,10 @@ class GuiInteractors:
         color_hex = "#%02x%02x%02x" % (color.r, color.g, color.b)
 
         self.click_gui(bias=SN(x=0.2, y=0.1)) # Open the color picker
-        time.sleep(0.3) # Wait for the color picker to open
         self.click_gui(bias=SN(x=0.7, y=-0.13)) # Switch to color field
-        time.sleep(0.3) # Wait for the switch
         hold_ctrl_and_enter_text("a") # Select the current color
-        time.sleep(0.3) # Wait for the selection
-        return
         enter_text(color_hex) # Write the new color
-        time.sleep(0.3) # Wait for the writing...
         self.click_gui(bias=SN(x=0.38, y=-0.13)) # Confirm color
-        time.sleep(0.3) # Wait for confirmation
 
 def main():
     time.sleep(3) # Wait for the user to open Roblox
