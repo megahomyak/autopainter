@@ -2,7 +2,7 @@ from PIL import ImageGrab
 from types import SimpleNamespace as SN
 import time
 import pyautogui # For some reason fixes screen scaling for other libraries
-import ait
+import pyautoit
 
 # Screen interactor adapters:
 
@@ -25,10 +25,10 @@ def get_height(screenshot):
 # Gui interactor adapters:
 
 def click(spot):
-    ait.click(spot.x, spot.y)
+    pyautoit.mouse_click("left", spot.x, spot.y, speed=0)
 
 def enter_text(text):
-    ait.write(text)
+    pyautoit.send(text)
 
 def hold_ctrl_and_enter_text(text):
     with ait.hold("ctrl"):
