@@ -84,8 +84,9 @@ def compress_image_pixels(image_pixels, image_side_size, quantization_threshold)
             for saved_pixel in saved_pixels:
                 if check_color_similarity(saved_pixel.color, current_color, quantization_threshold):
                     saved_pixel.spots.append(spot)
-                    continue
-            saved_pixels.append(SN(color=current_color, spots=[spot]))
+                    break
+            else:
+                saved_pixels.append(SN(color=current_color, spots=[spot]))
     return saved_pixels
 
 def transform_bias_to_gui_spot(bottom_left, side, bias):
@@ -96,18 +97,14 @@ def click_gui(bottom_left, side, bias):
 
 class ChangeWaiter:
     def __init__(self, bottom_left, side, bias):
-        self.bias = bias
         self.spot = transform_bias_to_gui_spot(bias)
         self.old_pixel = get_screen_pixel(self.spot)
-    def __exit__(self, *_, **__):
-        while get_screen_pixel(spot=self.spot) == self.old_pixel: pass
-
-class ChangeWaiterFactory:
-    def __init__(self, bottom_left, side):
-        self.bottom_left = bottom_left
-        self.side = side
-    def produce(self, bias):
-        return ChangeWaiter(self.bottom_left, self.side, bias)
+    def wait(self):
+        while True:
+            new_pixel = get_screen_pixel(spot=self.spot)
+            if new_pixel != self.old_pixel:
+                self.old_pixel = new_pixel
+                break
 
 def draw_image(compressed_image_pixels, screen_canvas_bounds, canvas_side_pixels):
     side = min(screen_canvas_bounds.bottom - screen_canvas_bounds.top, screen_canvas_bounds.right - screen_canvas_bounds.left)
@@ -123,6 +120,9 @@ def draw_image(compressed_image_pixels, screen_canvas_bounds, canvas_side_pixels
         click(screen_pixel_spot)
 
 def main():
+    Image.open("the_real_one.jpeg").resize((CANVAS_SIDE_PIXELS, CANVAS_SIDE_PIXELS)).convert("P", colors=5).show()
+    raise Exception()
+
     input_image_pixels = load_any_image_pixels(directory=".", target_side_size=CANVAS_SIDE_PIXELS)
     if input_image_pixels is None:
         print("Please, provide an input image.")
@@ -137,6 +137,30 @@ def main():
     draw_image(compressed_input_image_pixels, screen_canvas_bounds, CANVAS_SIDE_PIXELS)
 
 main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # OLD CODE BELOW
 
