@@ -1,19 +1,21 @@
 from PIL import ImageGrab, Image, UnidentifiedImageError
-from types import SimpleNamespace as SN
 import time
 import pyautogui # For some reason fixes screen scaling for other libraries
 import autoit
 import os
 import keyboard
+from collections import namedtuple
 
-CANVAS_SIDE_PIXELS = 338
-QUANTIZATION_THRESHOLD = 0
+Pixel = namedtuple("Pixel", "r g b")
+Spot = namedtuple("Spot", "x y")
+Part = namedtuple("Part", "x y")
+Bias = namedtuple("Bias", "x y")
+Bounds = namedtuple("Bias", "bottom top left right")
 
 # I/O adapters below
 
 def get_screen_pixel(spot):
-    pil_pixel = ImageGrab.grab(bbox=(spot.x, spot.y, spot.x, spot.y))
-    return SN(r=pil_pixel[0], g=pil_pixel[1], b=pil_pixel[2])
+    return Pixel(ImageGrab.grab(bbox=(spot.x, spot.y, spot.x, spot.y))[0][0])
 
 def get_screen_width():
     return ImageGrab.grab().width
@@ -32,68 +34,54 @@ def send_ctrl_a_color_in_hex_and_enter(color):
     command = "^a" + color_hex + "{ENTER}"
     autoit.send(command)
 
-def load_image_pixels(file_path, target_side_size):
+def load_quantized_image_pixels(colors_amount, file_path, target_side_size):
     return map(
-        lambda color_tuple: SN(r=color_tuple[0], g=color_tuple[1], b=color_tuple[2]),
-        Image.open(file_path).convert("RGB").resize((target_side_size, target_side_size)).getdata(),
+        lambda color_tuple: Pixel(color_tuple),
+        Image.open(file_path).convert("RGB").quantize(colors=colors_amount).resize((target_side_size, target_side_size)).getdata(),
     )
 
 # I/O adapters above
 
 def get_screen_canvas_bounds():
-    center = SN(x=get_screen_width()//2, y=get_screen_height()//2)
+    center = Spot(x=get_screen_width()//2, y=get_screen_height()//2)
     def find_bound(bias):
         current = center
         while True:
-            new_spot = SN(x=current.x + bias.x, y=current.y + bias.y)
-            if get_screen_pixel(new_spot) != SN(r=255, g=255, b=255):
+            new_spot = Spot(x=current.x + bias.x, y=current.y + bias.y)
+            if get_screen_pixel(new_spot) != Pixel(r=255, g=255, b=255):
                 return current
             current = new_spot
-    bottom = bound_finder.find_bound(bias=SN(x=0, y=1)).y
-    top = bound_finder.find_bound(bias=SN(x=0, y=-1)).y
-    left = bound_finder.find_bound(bias=SN(x=-1, y=0)).x
-    right = bound_finder.find_bound(bias=SN(x=1, y=0)).x
-    return SN(
-        bottom=bound_finder.find_bound(bias=SN(x=0, y=1)).y,
-        top=bound_finder.find_bound(bias=SN(x=0, y=-1)).y,
-        left=bound_finder.find_bound(bias=SN(x=-1, y=0)).x,
-        right=bound_finder.find_bound(bias=SN(x=1, y=0)).x,
+    return Bounds(
+        bottom=bound_finder.find_bound(Bias(x=0, y=1)).y,
+        top=bound_finder.find_bound(Bias(x=0, y=-1)).y,
+        left=bound_finder.find_bound(Bias(x=-1, y=0)).x,
+        right=bound_finder.find_bound(Bias(x=1, y=0)).x,
     )
 
-def check_color_similarity(color1, color2, threshold):
-    return abs(color1.r - color2.r) <= threshold and abs(color1.g - color2.g) <= threshold and abs(color1.b - color2.b) <= threshold
-
-def load_any_image_pixels(directory, target_side_size):
+def load_any_image_pixels(colors_amount, directory, target_side_size):
     image = None
     for file_name in os.listdir(directory):
         try:
-            image = load_image_pixels(file_name, target_side_size)
-        except:
+            image = load_quantized_image_pixels(colors_amount, file_name, target_side_size)
+        except (PermissionError, UnidentifiedImageError):
             pass
         else:
             break
     return image
 
 def compress_image_pixels(image_pixels, image_side_size, quantization_threshold):
-    saved_pixels = []
+    saved_pixels = {}
     for y in range(image_side_size):
         for x in range(image_side_size):
-            spot = SN(x=x, y=y)
+            spot = Spot(x=x, y=y)
             current_color = next(image_pixels)
-            if current_color == SN(r=255, g=255, b=255): continue
-            for saved_pixel in saved_pixels:
-                if check_color_similarity(saved_pixel.color, current_color, quantization_threshold):
-                    saved_pixel.spots.append(spot)
-                    break
-            else:
-                saved_pixels.append(SN(color=current_color, spots=[spot]))
+            if current_color == Pixel(r=255, g=255, b=255):
+                continue
+            saved_pixels.setdefault(current_color, []).append(spot)
     return saved_pixels
 
-def transform_bias_to_gui_spot(bottom_left, side, bias):
-    return SN(x=bottom_left.x + int(bias.x*side), y=bottom_left.y + int(bias.y*side))
-
-def click_gui(bottom_left, side, bias):
-    click(spot=transform_bias_to_gui_spot(bottom_left, side, bias))
+def transform_part_to_gui_spot(bottom_left, side, part):
+    return Spot(x=bottom_left.x + int(part.x*side), y=bottom_left.y + int(part.y*side))
 
 class ChangeWaiter:
     def __init__(self, bottom_left, side, bias):
@@ -108,22 +96,23 @@ class ChangeWaiter:
 
 def draw_image(compressed_image_pixels, screen_canvas_bounds, canvas_side_pixels):
     side = min(screen_canvas_bounds.bottom - screen_canvas_bounds.top, screen_canvas_bounds.right - screen_canvas_bounds.left)
-    bottom_left = SN(x=screen_canvas_bounds.left, y=screen_canvas_bounds.bottom)
-    move(transform_bias_to_gui_spot(bias=SN(x=0.2, y=-0.13)))
+    bottom_left = Spot(x=screen_canvas_bounds.left, y=screen_canvas_bounds.bottom)
+    move(transform_part_to_gui_spot(part=Part(x=0.2, y=-0.13)))
     return
-    for pixel in compressed_image_pixels:
+    for pixel, spots in compressed_image_pixels.items():
         change_color(pixel.color)
-        screen_pixel_spot = SN(
-            x=side / canvas_side_pixels * pixel.spot.x,
-            y=side / canvas_side_pixels * pixel.spot.y,
-        )
-        click(screen_pixel_spot)
+        for spot in spots:
+            screen_pixel_spot = Spot(
+                x=side / canvas_side_pixels * pixel.spot.x,
+                y=side / canvas_side_pixels * pixel.spot.y,
+            )
+            click(screen_pixel_spot)
 
 def main():
-    Image.open("the_real_one.jpeg").resize((CANVAS_SIDE_PIXELS, CANVAS_SIDE_PIXELS)).convert("P", colors=5).show()
-    raise Exception()
+    CANVAS_SIDE_PIXELS = 338
+    COLORS_AMOUNT = 255
 
-    input_image_pixels = load_any_image_pixels(directory=".", target_side_size=CANVAS_SIDE_PIXELS)
+    input_image_pixels = load_any_image_pixels(COLORS_AMOUNT, directory=".", target_side_size=CANVAS_SIDE_PIXELS)
     if input_image_pixels is None:
         print("Please, provide an input image.")
         exit(1)
@@ -187,7 +176,7 @@ def get_input_image(directory):
     for file_name in os.listdir(directory):
         try:
             image = Image.open(file_name)
-        except:
+        except ValueError:
             pass
         else:
             break
