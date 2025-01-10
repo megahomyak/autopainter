@@ -1,0 +1,13 @@
+Changing the color:
+* Record the color of the button on the source screen
+* Pass the recording down to the color picking function, clone it there
+* Make the color picking function move the mouse onto the button (keep in mind that the cursor goes down and right, so its point should be lower or righter than the pixel observed)
+* Wait for the pixel to change
+* Click onto the same place
+* Wait for the pixel to change
+* Record the pixel with the current color
+* Click on the textbox # HOW TO CHECK?
+* Start replacing stuff in the textbox
+* Wait for the pixel with the current color to change
+* Click on the checkmark
+* Wait for the initial button pixel to change

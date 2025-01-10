@@ -15,7 +15,11 @@ Bounds = namedtuple("Bias", "bottom top left right")
 # I/O adapters below
 
 def get_screen_pixel(spot):
-    return Pixel(ImageGrab.grab(bbox=(spot.x, spot.y, spot.x, spot.y))[0][0])
+    pixel = autoit.pixel_get_color(x=spot.x, y=spot.y)
+    red = pixel & 0xFF
+    green = (pixel >> 8) & 0xFF
+    blue = (pixel >> 16) & 0xFF
+    return Pixel(red, green, blue)
 
 def get_screen_width():
     return ImageGrab.grab().width
@@ -23,10 +27,10 @@ def get_screen_width():
 def get_screen_height():
     return ImageGrab.grab().height
 
-def mouse_click(spot):
+def click_mouse(spot):
     autoit.mouse_click("left", spot.x, spot.y, speed=0)
 
-def mouse_move(spot):
+def move_mouse(spot):
     autoit.mouse_move(spot.x, spot.y, speed=0)
 
 def send_ctrl_a_color_in_hex_and_enter(color):
@@ -36,26 +40,27 @@ def send_ctrl_a_color_in_hex_and_enter(color):
 
 def load_quantized_image_pixels(colors_amount, file_path, target_side_size):
     return map(
-        lambda color_tuple: Pixel(color_tuple),
-        Image.open(file_path).convert("RGB").quantize(colors=colors_amount).resize((target_side_size, target_side_size)).getdata(),
+        lambda color_tuple: Pixel(*color_tuple),
+        Image.open(file_path).convert("RGB").quantize(colors=colors_amount).convert("RGB").resize((target_side_size, target_side_size)).getdata(),
     )
 
 # I/O adapters above
 
+def find_bound(center, bias):
+    current = center
+    while True:
+        new_spot = Spot(x=current.x + bias.x, y=current.y + bias.y)
+        if get_screen_pixel(new_spot) != Pixel(r=255, g=255, b=255):
+            return current
+        current = new_spot
+
 def get_screen_canvas_bounds():
     center = Spot(x=get_screen_width()//2, y=get_screen_height()//2)
-    def find_bound(bias):
-        current = center
-        while True:
-            new_spot = Spot(x=current.x + bias.x, y=current.y + bias.y)
-            if get_screen_pixel(new_spot) != Pixel(r=255, g=255, b=255):
-                return current
-            current = new_spot
     return Bounds(
-        bottom=bound_finder.find_bound(Bias(x=0, y=1)).y,
-        top=bound_finder.find_bound(Bias(x=0, y=-1)).y,
-        left=bound_finder.find_bound(Bias(x=-1, y=0)).x,
-        right=bound_finder.find_bound(Bias(x=1, y=0)).x,
+        bottom=find_bound(center, Bias(x=0, y=1)).y,
+        top=find_bound(center, Bias(x=0, y=-1)).y,
+        left=find_bound(center, Bias(x=-1, y=0)).x,
+        right=find_bound(center, Bias(x=1, y=0)).x,
     )
 
 def load_any_image_pixels(colors_amount, directory, target_side_size):
@@ -69,7 +74,7 @@ def load_any_image_pixels(colors_amount, directory, target_side_size):
             break
     return image
 
-def compress_image_pixels(image_pixels, image_side_size, quantization_threshold):
+def sort_image_pixels(image_pixels, image_side_size):
     saved_pixels = {}
     for y in range(image_side_size):
         for x in range(image_side_size):
@@ -84,22 +89,31 @@ def transform_part_to_gui_spot(bottom_left, side, part):
     return Spot(x=bottom_left.x + int(part.x*side), y=bottom_left.y + int(part.y*side))
 
 class ChangeWaiter:
-    def __init__(self, bottom_left, side, bias):
-        self.spot = transform_bias_to_gui_spot(bias)
-        self.old_pixel = get_screen_pixel(self.spot)
+    def __init__(self, spot, old_pixel):
+        self.spot = spot
+        self.old_pixel = old_pixel
+    @classmethod
+    def record(cls, bottom_left, side, bias):
+        spot = transform_bias_to_gui_spot(bias)
+        old_pixel = get_screen_pixel(self.spot)
+        return cls(spot, old_pixel)
     def wait(self):
         while True:
             new_pixel = get_screen_pixel(spot=self.spot)
             if new_pixel != self.old_pixel:
                 self.old_pixel = new_pixel
                 break
+    def clone(self):
+        return ChangeWaiter(self.spot, self.old_pixel)
 
-def draw_image(compressed_image_pixels, screen_canvas_bounds, canvas_side_pixels):
+def draw_image(sorted_image_pixels, screen_canvas_bounds, canvas_side_pixels):
     side = min(screen_canvas_bounds.bottom - screen_canvas_bounds.top, screen_canvas_bounds.right - screen_canvas_bounds.left)
     bottom_left = Spot(x=screen_canvas_bounds.left, y=screen_canvas_bounds.bottom)
-    move(transform_part_to_gui_spot(part=Part(x=0.2, y=-0.13)))
+    click_mouse(spot=transform_part_to_gui_spot(bottom_left, side, Part(x=0.2, y=0.1)))
+    time.sleep(2)
+    move_mouse(spot=transform_part_to_gui_spot(bottom_left, side, Part(x=0.25, y=-0.13)))
     return
-    for pixel, spots in compressed_image_pixels.items():
+    for pixel, spots in sorted_image_pixels.items():
         change_color(pixel.color)
         for spot in spots:
             screen_pixel_spot = Spot(
@@ -117,7 +131,7 @@ def main():
         print("Please, provide an input image.")
         exit(1)
 
-    compressed_input_image_pixels = compress_image_pixels(input_image_pixels, image_side_size=CANVAS_SIDE_PIXELS, quantization_threshold=QUANTIZATION_THRESHOLD)
+    compressed_input_image_pixels = sort_image_pixels(input_image_pixels, image_side_size=CANVAS_SIDE_PIXELS)
 
     time.sleep(3) # Wait for the user to open Roblox
 
