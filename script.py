@@ -6,6 +6,140 @@ import autoit
 import os
 import keyboard
 
+CANVAS_SIDE_PIXELS = 338
+QUANTIZATION_THRESHOLD = 0
+
+# I/O adapters below
+
+def get_screen_pixel(spot):
+    pil_pixel = ImageGrab.grab(bbox=(spot.x, spot.y, spot.x, spot.y))
+    return SN(r=pil_pixel[0], g=pil_pixel[1], b=pil_pixel[2])
+
+def get_screen_width():
+    return ImageGrab.grab().width
+
+def get_screen_height():
+    return ImageGrab.grab().height
+
+def mouse_click(spot):
+    autoit.mouse_click("left", spot.x, spot.y, speed=0)
+
+def mouse_move(spot):
+    autoit.mouse_move(spot.x, spot.y, speed=0)
+
+def send_ctrl_a_color_in_hex_and_enter(color):
+    color_hex = "{#}%02x%02x%02x" % (color.r, color.g, color.b)
+    command = "^a" + color_hex + "{ENTER}"
+    autoit.send(command)
+
+def load_image_pixels(file_path, target_side_size):
+    return map(
+        lambda color_tuple: SN(r=color_tuple[0], g=color_tuple[1], b=color_tuple[2]),
+        Image.open(file_path).convert("RGB").resize((target_side_size, target_side_size)).getdata(),
+    )
+
+# I/O adapters above
+
+def get_screen_canvas_bounds():
+    center = SN(x=get_screen_width()//2, y=get_screen_height()//2)
+    def find_bound(bias):
+        current = center
+        while True:
+            new_spot = SN(x=current.x + bias.x, y=current.y + bias.y)
+            if get_screen_pixel(new_spot) != SN(r=255, g=255, b=255):
+                return current
+            current = new_spot
+    bottom = bound_finder.find_bound(bias=SN(x=0, y=1)).y
+    top = bound_finder.find_bound(bias=SN(x=0, y=-1)).y
+    left = bound_finder.find_bound(bias=SN(x=-1, y=0)).x
+    right = bound_finder.find_bound(bias=SN(x=1, y=0)).x
+    return SN(
+        bottom=bound_finder.find_bound(bias=SN(x=0, y=1)).y,
+        top=bound_finder.find_bound(bias=SN(x=0, y=-1)).y,
+        left=bound_finder.find_bound(bias=SN(x=-1, y=0)).x,
+        right=bound_finder.find_bound(bias=SN(x=1, y=0)).x,
+    )
+
+def check_color_similarity(color1, color2, threshold):
+    return abs(color1.r - color2.r) <= threshold and abs(color1.g - color2.g) <= threshold and abs(color1.b - color2.b) <= threshold
+
+def load_any_image_pixels(directory, target_side_size):
+    image = None
+    for file_name in os.listdir(directory):
+        try:
+            image = load_image_pixels(file_name, target_side_size)
+        except:
+            pass
+        else:
+            break
+    return image
+
+def compress_image_pixels(image_pixels, image_side_size, quantization_threshold):
+    saved_pixels = []
+    for y in range(image_side_size):
+        for x in range(image_side_size):
+            spot = SN(x=x, y=y)
+            current_color = next(image_pixels)
+            if current_color == SN(r=255, g=255, b=255): continue
+            for saved_pixel in saved_pixels:
+                if check_color_similarity(saved_pixel.color, current_color, quantization_threshold):
+                    saved_pixel.spots.append(spot)
+                    continue
+            saved_pixels.append(SN(color=current_color, spots=[spot]))
+    return saved_pixels
+
+def transform_bias_to_gui_spot(bottom_left, side, bias):
+    return SN(x=bottom_left.x + int(bias.x*side), y=bottom_left.y + int(bias.y*side))
+
+def click_gui(bottom_left, side, bias):
+    click(spot=transform_bias_to_gui_spot(bottom_left, side, bias))
+
+class ChangeWaiter:
+    def __init__(self, bottom_left, side, bias):
+        self.bias = bias
+        self.spot = transform_bias_to_gui_spot(bias)
+        self.old_pixel = get_screen_pixel(self.spot)
+    def __exit__(self, *_, **__):
+        while get_screen_pixel(spot=self.spot) == self.old_pixel: pass
+
+class ChangeWaiterFactory:
+    def __init__(self, bottom_left, side):
+        self.bottom_left = bottom_left
+        self.side = side
+    def produce(self, bias):
+        return ChangeWaiter(self.bottom_left, self.side, bias)
+
+def draw_image(compressed_image_pixels, screen_canvas_bounds, canvas_side_pixels):
+    side = min(screen_canvas_bounds.bottom - screen_canvas_bounds.top, screen_canvas_bounds.right - screen_canvas_bounds.left)
+    bottom_left = SN(x=screen_canvas_bounds.left, y=screen_canvas_bounds.bottom)
+    move(transform_bias_to_gui_spot(bias=SN(x=0.2, y=-0.13)))
+    return
+    for pixel in compressed_image_pixels:
+        change_color(pixel.color)
+        screen_pixel_spot = SN(
+            x=side / canvas_side_pixels * pixel.spot.x,
+            y=side / canvas_side_pixels * pixel.spot.y,
+        )
+        click(screen_pixel_spot)
+
+def main():
+    input_image_pixels = load_any_image_pixels(directory=".", target_side_size=CANVAS_SIDE_PIXELS)
+    if input_image_pixels is None:
+        print("Please, provide an input image.")
+        exit(1)
+
+    compressed_input_image_pixels = compress_image_pixels(input_image_pixels, image_side_size=CANVAS_SIDE_PIXELS, quantization_threshold=QUANTIZATION_THRESHOLD)
+
+    time.sleep(3) # Wait for the user to open Roblox
+
+    screen_canvas_bounds = get_screen_canvas_bounds()
+
+    draw_image(compressed_input_image_pixels, screen_canvas_bounds, CANVAS_SIDE_PIXELS)
+
+main()
+
+# OLD CODE BELOW
+
 # Image interactor adapters:
 
 def make_screenshot(area=None):
@@ -147,6 +281,8 @@ def main():
 
     pixel_size = PixelSizeMeasurer(center=bound_finder.center, canvas_area=SN(bottom=bottom, top=top, left=left, right=right), pick_color=gui_interactors.pick_color).measure()
     side_pixels = side // pixel_size
+    print(side_pixels)
+    return
 
     input_image = resize(input_image, SN(width=side_pixels, height=side_pixels))
     colors_to_spots = {}
@@ -162,5 +298,3 @@ def main():
             if keyboard.is_pressed("q"):
                 exit(0)
             click(spot)
-
-main()
