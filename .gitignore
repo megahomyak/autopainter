@@ -1,3 +1,5 @@
-/venv
 /.installed
 /the_real_one.jpeg
+/venv
+/settings.json
+__pycache__/**
