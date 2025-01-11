@@ -6,6 +6,7 @@ def get_canvas_area_bound(center, screenshot, bias):
         new = current[0]+bias[0], current[1]+bias[1]
         if screenshot.getpixel(new) != (255, 255, 255):
             break
+        current = new
     return current
 
 def get_canvas_area():
@@ -15,4 +16,4 @@ def get_canvas_area():
     left = get_canvas_area_bound(center, screenshot, (-1, 0))[0]
     bottom = get_canvas_area_bound(center, screenshot, (0, 1))[1]
     side = bottom - top
-    return {"side": side, "bottom": bottom, "left": left}
+    return {"side": side, "top": top, "left": left}
