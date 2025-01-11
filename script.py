@@ -162,7 +162,7 @@ class ChangeWaiter:
             if new_pixel != self.old_pixel:
                 return ChangeWaiter(self.spot, new_pixel)
 
-def change_color(pixel):
+def change_color(new_color, reset_zoom_button_part, reset_zoom_button_free_spot, color_picker_button_spot):
     # 107 161 249: "selection blue"
     pass
 
@@ -172,14 +172,18 @@ def draw_image(sorted_image_pixels, screen_params, canvas_side_resolution):
         screen_params.canvas_area.right - screen_params.canvas_area.left,
     )
     COLOR_PICKER_BUTTON_PART = Part(x=0.15, y=0.1)
-    LAYER_1_HIDE_BUTTON_PART = Part(x=1.43, y=-0.55)
+    RESET_ZOOM_BUTTON_PART = Part(x=-0.15, y=-0.5)
+    RESET_ZOOM_BUTTON_FREE_PART = Part(x=-0.23, y=-0.5)
     bottom_left = Spot(
         x=screen_params.canvas_area.left,
         y=screen_params.canvas_area.bottom,
     )
     color_picker_button_spot = transform_part_to_button_spot(bottom_left, side, COLOR_PICKER_BUTTON_PART)
-    layer_1_hide_button_spot = transform_part_to_button_spot(bottom_left, side, LAYER_1_HIDE_BUTTON_PART)
-    move_mouse(layer_1_hide_button_spot)
+    reset_zoom_button_spot = transform_part_to_button_spot(bottom_left, side, RESET_ZOOM_BUTTON_PART)
+    reset_zoom_button_free_spot = transform_part_to_button_spot(bottom_left, side, RESET_ZOOM_BUTTON_FREE_PART)
+    move_mouse(reset_zoom_button_spot)
+    time.sleep(2)
+    move_mouse(reset_zoom_button_free_spot)
     return
     move_mouse(screen_params.color_text_box_spot)
     time.sleep(1)

@@ -1,0 +1,4 @@
+pillow==11.1.0
+pyautogui==0.9.54
+pyautoit==0.6.5
+pynput==1.7.7
