@@ -1,17 +1,18 @@
+import json
+try:
+    settings = json.load(open("settings.json"))
+except FileNotFoundError:
+    print("Please, run `setup.bat` first. Read the instruction to know how")
+    exit(1)
+
 import pyautogui # For some reason fixes screen scaling for other libraries
 from shared import get_canvas_area
-import json
 import os
 from PIL import Image, UnidentifiedImageError
 import time
 import autoit
 import keyboard
 
-try:
-    settings = json.load(open("settings.json"))
-except FileNotFoundError:
-    print("Please, run `setup.bat` first. Read the instruction to know how")
-    exit(1)
 canvas_pixel_size = settings["canvas_area"]["side"] / settings["canvas_side_resolution"]
 expected_canvas_area = settings["canvas_area"]
 
