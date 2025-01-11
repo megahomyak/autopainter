@@ -6,7 +6,7 @@ Changing the color:
 * Click onto the same place
 * Wait for the pixel to change
 * Record the pixel with the current color
-* Click on the textbox # HOW TO CHECK?
+* Click on the textbox # Check using that "any blue color in the area" thingy
 * Start replacing stuff in the textbox
 * Wait for the pixel with the current color to change
 * Click on the checkmark
