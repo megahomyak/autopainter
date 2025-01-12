@@ -2,7 +2,8 @@ import json
 try:
     settings = json.load(open("settings.txt"))
 except FileNotFoundError:
-    print("Please, run `setup.bat` first. Read the instruction to know how")
+    print("Please, run `setup.bat` first. Read the instruction to know how.")
+    input("You can close this window.")
     exit(1)
 
 import pyautogui # For some reason fixes screen scaling for other libraries
@@ -23,7 +24,8 @@ for file_name in os.listdir("."):
     except (PermissionError, UnidentifiedImageError):
         pass
 if image is None:
-    print("Please, provide an input image.")
+    print("An input image was not provided. Please, provide an input image.")
+    input("You can close this window.")
     exit(1)
 inverse_palette = {
     v: k
@@ -62,18 +64,19 @@ for color, spots in colors.items():
     time.sleep(0.3)
     autoit.send("^a")
     time.sleep(0.3)
-    autoit.send("{#}%02x%02x%02x" % color)
+    autoit.clip_put("#%02x%02x%02x" % color)
+    autoit.send("^v")
     time.sleep(0.3)
     autoit.send("{ENTER}")
     time.sleep(0.3)
     click_gui(settings["color_confirmation_spot"])
-    time.sleep(1)
+    time.sleep(0.3)
     for spot in spots:
-        if keyboard.is_pressed("q"):
+        if keyboard.is_pressed("backspace"):
             exit(0)
-        if keyboard.is_pressed("p"):
+        if keyboard.is_pressed("enter"):
             time.sleep(10)
-            while keyboard.read_key() != "p":
+            while keyboard.read_key() != "enter":
                 pass
         screen_spot = (
             settings["canvas_area"]["left"] + int(canvas_pixel_size * (spot[0] + 0.5)),

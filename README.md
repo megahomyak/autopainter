@@ -28,9 +28,9 @@ This is an automatic drawing tool for Roblox drawing games, like "Draw and Donat
 * Drop any image into the folder with the scripts
 * Set your canvas resolution to 200x200 and your brush size to 0 if you're in Draw and Donate. If you're in Starving Artists, check the setting change section below ("Changing some settings") to configure the program to draw in 32x32, and also set the brush size to "1" if not set already. Be sure that you select the brush as your tool
 * Run "run.bat"
-* Switch to Roblox. The program will begin drawing as soon as it sees an empty canvas of the same size as in the setup. Don't forget that your mouse obstructs the canvas!
-* Hold "q" for some time to stop the program (while the pixels are drawn, not when the color is selected)
-* Hold "p" for some time to pause the program, and after 10 seconds of pause you will be able to unpause the program by pressing "p" again (once) (again, "p" only works when the program is drawing pixels)
+* Switch to Roblox. The program will begin drawing as soon as it sees an empty canvas of the same size as in the setup. Don't forget that your mouse can obstruct the canvas!
+* Hold the "backspace" key for some time to stop the program (while the pixels are drawn, not when the color is selected)
+* Hold the "enter" key for some time to pause the program, and after 10 seconds of pause you will be able to unpause the program by pressing "enter" again (once) (pausing only works when the program is drawing pixels)
 
 # Changing some settings
 
