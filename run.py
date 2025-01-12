@@ -19,7 +19,7 @@ expected_canvas_area = settings["canvas_area"]
 image = None
 for file_name in os.listdir("."):
     try:
-        image = Image.open(file_name).convert("RGB").quantize(colors=settings["colors_count"]).resize((settings["canvas_side_resolution"], settings["canvas_side_resolution"]))
+        image = Image.open(file_name).convert("RGB").resize((settings["canvas_side_resolution"], settings["canvas_side_resolution"]), resample=Image.Resampling.BICUBIC).quantize(colors=settings["colors_count"])
     except (PermissionError, UnidentifiedImageError):
         pass
 if image is None:
@@ -43,29 +43,29 @@ while expected_canvas_area != get_canvas_area():
 def click_gui(spot):
     autoit.mouse_move(spot[0], spot[1], speed=2)
     autoit.mouse_down("left")
-    time.sleep(0.2)
+    time.sleep(0.1)
     autoit.mouse_up("left")
-    time.sleep(0.2)
+    time.sleep(0.1)
 
 def paint(spot):
     autoit.mouse_move(spot[0], spot[1], speed=2)
     autoit.mouse_down("left")
-    time.sleep(0.2)
+    time.sleep(0.1)
     autoit.mouse_up("left")
-    time.sleep(0.2)
+    time.sleep(0.1)
 
 for color, spots in colors.items():
-    time.sleep(1)
+    time.sleep(0.3)
     click_gui(settings["color_picker_spot"])
-    time.sleep(1)
+    time.sleep(0.3)
     click_gui(settings["color_input_spot"])
-    time.sleep(1)
+    time.sleep(0.3)
     autoit.send("^a")
-    time.sleep(1)
+    time.sleep(0.3)
     autoit.send("{#}%02x%02x%02x" % color)
-    time.sleep(1)
+    time.sleep(0.3)
     autoit.send("{ENTER}")
-    time.sleep(1)
+    time.sleep(0.3)
     click_gui(settings["color_confirmation_spot"])
     time.sleep(1)
     for spot in spots:
