@@ -1,6 +1,6 @@
 import json
 try:
-    settings = json.load(open("settings.json"))
+    settings = json.load(open("settings.txt"))
 except FileNotFoundError:
     print("Please, run `setup.bat` first. Read the instruction to know how")
     exit(1)
@@ -71,6 +71,10 @@ for color, spots in colors.items():
     for spot in spots:
         if keyboard.is_pressed("q"):
             exit(0)
+        if keyboard.is_pressed("p"):
+            time.sleep(10)
+            while keyboard.read_key() != "p":
+                pass
         screen_spot = (
             settings["canvas_area"]["left"] + int(canvas_pixel_size * (spot[0] + 0.5)),
             settings["canvas_area"]["top"] + int(canvas_pixel_size * (spot[1] + 0.5)),

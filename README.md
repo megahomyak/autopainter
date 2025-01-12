@@ -30,10 +30,11 @@ This is an automatic drawing tool for Roblox drawing games, like "Draw and Donat
 * Run "run.bat"
 * Switch to Roblox. The program will begin drawing as soon as it sees an empty canvas of the same size as in the setup. Don't forget that your mouse obstructs the canvas!
 * Hold "q" for some time to stop the program
+* Hold "p" for some time to pause the program, and after 10 seconds of pause you will be able to unpause the program by pressing "p" again (once)
 
 # Changing some settings
 
-There are some settings in `settings.json` (the file that gets generated after the setup) that you can change.
+There are some settings in `settings.txt` (the file that gets generated after the setup) that you can change.
 
 * `"canvas_side_resolution"`: self-explanatory. Allows you to choose some other canvas resolution in the game, and the script will draw in the specified resolution
 * `"colors_count"`: the amount of colors the resulting image will have. Can go up to 256. Color compression is important to have better performance on small canvas resolutions

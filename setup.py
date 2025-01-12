@@ -30,4 +30,4 @@ json.dump({
     "color_confirmation_spot": color_confirmation_spot,
     "colors_count": 256,
     "canvas_side_resolution": 200,
-}, open("settings.json", "w"))
+}, open("settings.txt", "w"))
