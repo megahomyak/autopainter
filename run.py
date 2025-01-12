@@ -19,7 +19,7 @@ expected_canvas_area = settings["canvas_area"]
 image = None
 for file_name in os.listdir("."):
     try:
-        image = Image.open(file_name).convert("RGB").resize((settings["canvas_side_resolution"], settings["canvas_side_resolution"]), resample=Image.Resampling.BICUBIC).quantize(colors=settings["colors_count"])
+        image = Image.open(file_name).convert("RGB").resize((settings["canvas_side_resolution"], settings["canvas_side_resolution"]), resample=Image.Resampling.NEAREST).quantize(colors=settings["colors_count"])
     except (PermissionError, UnidentifiedImageError):
         pass
 if image is None:
