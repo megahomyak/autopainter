@@ -14,20 +14,19 @@ This is an automatic drawing tool for Roblox drawing games, like "Draw and Donat
 
 * Install Python 3.13.0 from here: https://www.python.org/downloads/release/python-3130/ . The program may work with other versions of Python as well, it just wasn't tested on those versions
 * If you mess up during the setup, just close its window and try again
-* Run "setup.bat" (by double-clicking on it)
-* Wait for all dependencies to install (you will see "Ready" in the window when it's over)
+* Run "setup.bat" (by double-clicking on it) and wait for all dependencies to install (you will see "Ready" in the window when it's over). If you see the cursor blink with no output, just wait more
 * Switch to Roblox
 * Make sure your canvas is open and your mouse cursor is not on the canvas
 * Press the "r" key on your keyboard. Wait for about three seconds afterwards. It is important to give the program enough time to take a screenshot
 * Click on the color picker button
-* Click on the field for text inputs
+* Click on the field for color code input (colors in that field look like "#1a2b3c")
 * Click on the checkmark button in Draw and Donate or on the closing button in Starving Artists
 * You're done! If button positions change in the future, run this script again
 
 # How to use
 
 * Drop any image into the folder with the scripts
-* Set your canvas resolution to 200x200 and your brush size to 0. If you're in Starving Artists, check the setting change section below to configure the program to draw in 32x32
+* Set your canvas resolution to 200x200 and your brush size to 0 if you're in Draw and Donate. If you're in Starving Artists, check the setting change section below ("Changing some settings") to configure the program to draw in 32x32, and also set the brush size to "1" if not set already
 * Run "run.bat"
 * Switch to Roblox. The program will begin drawing as soon as it sees an empty canvas of the same size as in the setup. Don't forget that your mouse obstructs the canvas!
 * Hold "q" for some time to stop the program
