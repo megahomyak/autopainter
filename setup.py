@@ -13,16 +13,20 @@ while keyboard.read_key() != "r":
 print("Taking a screenshot...")
 canvas_area = get_canvas_area()
 
-mouse_clicks = SimpleQueue()
+spots = SimpleQueue()
 
-mouse.on_click(lambda: mouse_clicks.put(mouse.get_position()))
+keyboard.add_hotkey("c", lambda: spots.put(mouse.get_position()))
 
-print("Listening for mouse clicks... (1)")
-color_picker_spot = mouse_clicks.get()
-print("Listening for mouse clicks... (2)")
-color_input_spot = mouse_clicks.get()
-print("Listening for mouse clicks... (3)")
-color_confirmation_spot = mouse_clicks.get()
+print("Listening for mouse positions... (1)")
+color_picker_spot = spots.get()
+print("Listening for mouse positions... (2)")
+color_input_spot = spots.get()
+print("Listening for mouse positions... (3)")
+color_confirmation_spot = spots.get()
+print("Listening for mouse positions... (4)")
+current_color_spot = spots.get()
+print("Listening for mouse positions... (5)")
+color_picker_check_spot = spots.get()
 json.dump({
     "canvas_area": canvas_area,
     "color_picker_spot": color_picker_spot,
@@ -30,4 +34,6 @@ json.dump({
     "color_confirmation_spot": color_confirmation_spot,
     "colors_count": 256,
     "canvas_side_resolution": 200,
+    "color_picker_check_spot": color_picker_check_spot,
+    "current_color_spot": current_color_spot,
 }, open("settings.txt", "w"))

@@ -1,0 +1,1 @@
+Starving Artists cell selection color: (179, 179, 179)
