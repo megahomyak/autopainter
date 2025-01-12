@@ -6,7 +6,7 @@ This is an automatic drawing tool for Roblox drawing games, like "Draw and Donat
 
 # How to download this
 
-* Go to https://github.com/megahomyak/autopainter/releases/latest and grab a zip from there
+* Download the .zip from here: https://github.com/megahomyak/autopainter/archive/refs/heads/master.zip
 * Drag the folder inside of it onto your desktop
 * Open the folder on the desktop
 
